@@ -40,14 +40,16 @@ const server = http.createServer(app);
 // Augmenter les timeouts pour les uploads Cloudinary
 server.timeout = 60000; // 60 secondes pour les uploads
 
+// Configuration CORS
+const corsOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  process.env.FRONTEND_URL || 'http://localhost:5173'
+];
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:8080',
-    process.env.FRONTEND_URL || 'http://localhost:5173'
-  ],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -59,7 +61,7 @@ app.use(cors({
 // --- Socket.IO Setup ---
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: corsOrigins,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
     credentials: true
