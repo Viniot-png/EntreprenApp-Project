@@ -48,24 +48,17 @@ const corsOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173'
 ];
 
-// Préflight request handler
-app.options('*', cors({
+const corsOptions = {
   origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200
-}));
+};
 
-app.use(cors({
-  origin: corsOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Set-Cookie'],
-  optionsSuccessStatus: 200
-}));
+// Apply CORS to all routes
+app.use(cors(corsOptions));
 
 
 // --- Socket.IO Setup ---
