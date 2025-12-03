@@ -73,6 +73,8 @@ global.onlineUsers = new Map();
 // Expose io globally so controllers can emit events after REST actions
 global.io = io;
 
+// Trust proxy for Render (important for rate limiting and X-Forwarded-For header)
+app.set('trust proxy', 1);
 
 app.use(helmet());
 
@@ -92,6 +94,12 @@ const authLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For on production (Render), client IP on local
+    return process.env.NODE_ENV === 'production' 
+      ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress).split(',')[0].trim()
+      : req.connection.remoteAddress;
+  }
 });
 
 const apiLimiter = rateLimit({
@@ -100,6 +108,12 @@ const apiLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For on production (Render), client IP on local
+    return process.env.NODE_ENV === 'production' 
+      ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress).split(',')[0].trim()
+      : req.connection.remoteAddress;
+  }
 });
 
 // Attach specific limiters to paths: auth endpoints stricter, rest of API more permissive
