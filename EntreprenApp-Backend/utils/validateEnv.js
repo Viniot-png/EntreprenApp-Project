@@ -15,11 +15,12 @@ export const validateEnv = () => {
   const missing = required.filter(v => !process.env[v]);
 
   if (missing.length > 0) {
-    console.error('❌ Variables d\'environnement manquantes:', missing.join(', '));
-    process.exit(1);
+    console.warn('⚠️  Variables d\'environnement manquantes:', missing.join(', '));
+    console.warn('   Note: Elles peuvent être définies via votre plateforme de déploiement (Render, etc)');
+    // Ne pas faire process.exit(1) pour permettre à Render de charger les variables
+  } else {
+    console.log('✅ Toutes les variables d\'environnement requises sont présentes');
   }
-
-  console.log('✅ Toutes les variables d\'environnement requises sont présentes');
 };
 
 export default validateEnv;

@@ -28,7 +28,7 @@ import suggestionsRoute from './routes/suggestions.route.js';
 import searchRoute from './routes/search.route.js';
 
 
-dotenv.config();
+dotenv.config({ path: '.env', override: false }); // Ne charge .env que s'il existe, ne surcharge pas les env vars de Render
 validateEnv();
 validateConfig();
 initializeCloudinary();
