@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 export const validateEnv = () => {
   const required = [
     'MONGO_URL',

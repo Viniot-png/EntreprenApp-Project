@@ -444,8 +444,23 @@ global.isUserOnline = (userId) => {
 const port = process.env.PORT;
 
 server.listen(port, async () => {
-  console.log(`Your server is running on port ${port}.`);
-  await DbConnection();
+  console.log(`✅ Serveur en écoute sur le port ${port}`);
+  try {
+    await DbConnection();
+  } catch (error) {
+    console.error('❌ Erreur lors de la connexion à MongoDB:', error.message);
+    console.error('   Le serveur continue sans accès à la base de données.');
+  }
+});
+
+// Gestion des erreurs du serveur
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${port} est déjà en utilisation. Assurez-vous que le port est disponible.`);
+    process.exit(1);
+  }
+  console.error('❌ Erreur serveur:', err.message);
+  process.exit(1);
 });
 
 

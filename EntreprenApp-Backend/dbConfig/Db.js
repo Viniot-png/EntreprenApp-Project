@@ -4,6 +4,13 @@ import dotenv from "dotenv";
 dotenv.config()
 
 export const DbConnection = async () => {
+  // Vérifier si MONGO_URL est disponible
+  if (!process.env.MONGO_URL) {
+    console.warn('⚠️  MONGO_URL non définie. Le serveur démarre mais sans connexion MongoDB.');
+    console.warn('   Assurez-vous que MONGO_URL est définie dans votre plateforme de déploiement.');
+    return;
+  }
+
   const maxRetries = 5;
   let retryCount = 0;
   
@@ -25,8 +32,9 @@ export const DbConnection = async () => {
       console.warn(`   Erreur: ${error.message}`);
       
       if (retryCount >= maxRetries) {
-        console.error(`❌ Impossible de connecter MongoDB après ${maxRetries} tentatives. Arrêt du serveur.`);
-        process.exit(1);
+        console.error(`❌ Impossible de connecter MongoDB après ${maxRetries} tentatives.`);
+        console.error('   Le serveur continue sans MongoDB. Vérifiez MONGO_URL et la connectivité réseau.');
+        return; // Continuer sans MongoDB plutôt que de crasher
       }
       
       // Attendre avant de réessayer

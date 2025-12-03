@@ -7,12 +7,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envPath = path.join(__dirname, '../.env');
 
-// Charger les variables d'environnement
+// Charger les variables d'environnement (si le fichier existe)
+// Note: Sur Render, il n'y a pas de .env file - les variables sont injectees via l'interface web
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
 } else {
-  console.error('❌ Erreur: Fichier .env non trouvé');
-  process.exit(1);
+  console.warn('⚠️  Fichier .env non trouvé. Les variables d\'environnement seront chargees depuis votre plateforme de deploiement.');
 }
 
 /**
