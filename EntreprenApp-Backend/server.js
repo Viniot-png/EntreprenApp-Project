@@ -40,13 +40,23 @@ const server = http.createServer(app);
 // Augmenter les timeouts pour les uploads Cloudinary
 server.timeout = 60000; // 60 secondes pour les uploads
 
-// Configuration CORS
+// Configuration CORS - MUST be first middleware
 const corsOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:8080',
   process.env.FRONTEND_URL || 'http://localhost:5173'
 ];
+
+// Préflight request handler
+app.options('*', cors({
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
+}));
 
 app.use(cors({
   origin: corsOrigins,
@@ -138,6 +148,31 @@ app.use(hpp({
 
 app.use(compression());
 
+// Multer error handler middleware (before routes)
+app.use((err, req, res, next) => {
+  // Check if it's a multer error
+  if (err.name === 'MulterError') {
+    console.error('❌ Multer Error:', err.message);
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'File upload error',
+      error: process.env.NODE_ENV === 'development' ? err : undefined
+    });
+  }
+  
+  // Check if it's a generic error from multer
+  if (err.message && (err.message.includes('Unexpected field') || err.message.includes('Stale request'))) {
+    console.error('❌ Upload Error:', err.message);
+    return res.status(400).json({
+      success: false,
+      message: 'File processing error - please try again',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+  
+  // Pass to next middleware if not a multer error
+  next(err);
+});
 
 app.get('/', (req, res) => {
   res.send('<h1 style="font-weight: bolder">WELL DONE!</h1>');

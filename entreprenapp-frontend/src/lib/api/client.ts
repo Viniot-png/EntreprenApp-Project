@@ -133,7 +133,9 @@ class ApiClient {
     return this.client.post<T>(url, formData, {
       ...config,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        // Important: Ne pas définir Content-Type manuellement
+        // Axios doit le faire automatiquement pour ajouter le boundary
+        ...config?.headers,
       },
     }).then((response) => response.data);
   }
@@ -142,7 +144,9 @@ class ApiClient {
     return this.client.put<T>(url, formData, {
       ...config,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        // Important: Ne pas définir Content-Type manuellement
+        // Axios doit le faire automatiquement pour ajouter le boundary
+        ...config?.headers,
       },
     }).then((response) => response.data);
   }
