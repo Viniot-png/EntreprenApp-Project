@@ -6,7 +6,7 @@ Copie-colle ces valeurs **EXACTEMENT** dans Render Dashboard:
 
 ### Build Command
 ```
-node build.js
+npm run build
 ```
 
 ### Pre-Deploy Command (Optional)
@@ -16,7 +16,7 @@ node build.js
 
 ### Start Command
 ```
-node start.js
+npm start
 ```
 
 ### Environment

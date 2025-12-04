@@ -1,0 +1,15 @@
+{
+  "name": "entrepreneurapp",
+  "version": "1.0.0",
+  "description": "EntreprenApp - Full Stack Application",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "start": "node start.js",
+    "dev:backend": "cd EntreprenApp-Backend && npm run dev",
+    "dev:frontend": "cd entreprenapp-frontend && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
