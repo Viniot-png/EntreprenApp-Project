@@ -385,7 +385,8 @@ export const GetMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user?._id).select("-password -verificationCode -verificationCodeExpireAt -resetPasswordToken -resetPasswordExpiresAt");
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    if (!user.isVerified) return res.status(404).json({ success: false, message: "Account not activated" });
+    // Note: We allow unverified users to access their profile for now
+    // They can verify email later from the dashboard
 
     res.status(200).json({ success: true, data: user });
   } catch (err) {
