@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Start script for Render deployment
- * This script starts the unified server
+ * This script finds the project root and starts the unified server
  */
 
 import path from 'path';
@@ -9,29 +9,44 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Find project root (same logic as build.js)
-let projectRoot = __dirname;
-console.log(`Current directory: ${projectRoot}`);
-
-while (!fs.existsSync(path.join(projectRoot, 'EntreprenApp-Backend')) && 
-       !fs.existsSync(path.join(projectRoot, 'package.json')) && 
-       projectRoot !== '/') {
-  projectRoot = path.dirname(projectRoot);
-}
-
-console.log(`Project root: ${projectRoot}`);
-
-// Change to project root to ensure paths are correct
-process.chdir(projectRoot);
+let __dirname = path.dirname(__filename);
 
 console.log('\n╔════════════════════════════════════════════════════════╗');
-console.log('║     🚀 EntreprenApp Start Script                       ║');
+console.log('║     🚀 Starting EntreprenApp Server                   ║');
 console.log('╚════════════════════════════════════════════════════════╝\n');
 
-// Import and start the unified server
-import('./server-unified.js').catch((error) => {
-  console.error('Failed to start server:', error);
+// Find project root
+console.log(`Initial directory: ${__dirname}`);
+
+// Check if we're in the right directory
+while (!fs.existsSync(path.join(__dirname, 'EntreprenApp-Backend', 'package.json'))) {
+  const parent = path.dirname(__dirname);
+  if (parent === __dirname) {
+    throw new Error('Could not find project root - EntreprenApp-Backend/package.json not found');
+  }
+  __dirname = parent;
+}
+
+console.log(`Project root: ${__dirname}\n`);
+
+try {
+  // Change to project root
+  process.chdir(__dirname);
+  console.log(`Working directory: ${process.cwd()}\n`);
+
+  // Verify server-unified.js exists
+  const serverPath = path.join(__dirname, 'server-unified.js');
+  if (!fs.existsSync(serverPath)) {
+    throw new Error(`server-unified.js not found at ${serverPath}`);
+  }
+  console.log(`Loading server from: ${serverPath}\n`);
+
+  // Import the server module (which automatically starts on load)
+  await import(serverPath);
+
+} catch (error) {
+  console.error('\n❌ Failed to start server:');
+  console.error(`   Error: ${error.message}`);
+  console.error(`   Stack: ${error.stack}`);
   process.exit(1);
-});
+}
