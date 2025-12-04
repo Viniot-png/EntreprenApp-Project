@@ -92,7 +92,7 @@ if (process.env.NODE_ENV === 'development') {
 // but allow higher limits for authenticated API endpoints (friends, messages, etc.).
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 500, // Production: 100 req/15min per IP (6 req/min), Dev: 500
+  max: process.env.NODE_ENV === 'production' ? 1000 : 500, // Production: 1000 req/15min per IP, Dev: 500
   message: 'Too many authentication attempts, please try again later.',
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
@@ -107,7 +107,7 @@ const authLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 500 : 5000, // Production: 500 req/15min per IP (33 req/min), Dev: 5000
+  max: process.env.NODE_ENV === 'production' ? 5000 : 5000, // Production: 5000 req/15min per IP, Dev: 5000
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
   legacyHeaders: false,
