@@ -1,1 +1,2 @@
-web: cd EntreprenApp-Backend && node server.js
+web: bash build-production.sh && node server-unified.js
+
