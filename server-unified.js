@@ -246,41 +246,45 @@ if (distExists) {
 
 // Serve static files (CSS, JS, images, etc.) with proper cache headers
 app.use(express.static(frontendDistPath, {
-  maxAge: '1d',
+  maxAge: '24h',
   etag: true,
   lastModified: true,
   setHeaders: (res, path) => {
-    // Cache assets (JS, CSS) for a long time
-    if (path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg|ico)$/)) {
+    // Cache assets (JS, CSS, fonts, images) for a long time
+    if (path.match(/\.(js|css|woff2|woff|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
     }
-    // Don't cache HTML files
+    // Don't cache HTML files - always revalidate
     else if (path.endsWith('.html')) {
-      res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+      res.set('Cache-Control', 'no-cache, must-revalidate, max-age=0');
+      res.set('Pragma', 'no-cache');
     }
   }
 }));
 
 // SPA fallback: Route non-API, non-asset requests to index.html
-app.get('/', (req, res) => {
-  const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log(`📍 [SPA] Serving index.html for: ${req.path}`);
-  res.sendFile(indexPath);
-});
-
-// Handle all other non-API routes (SPA routing)
-app.get(/^(?!\/api\/).+$/, (req, res, next) => {
-  // Don't handle if it looks like a file request (has extension)
-  if (req.path.includes('.')) {
+app.all('*', (req, res, next) => {
+  // Skip if it's an API route
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
+  // Skip if it's a file with an extension
+  if (/\.\w+$/.test(req.path)) {
+    return next();
+  }
+  
+  // Skip if it looks like a directory request (common false asset paths)
+  if (req.path.match(/^\/(public|static|assets|images|fonts|uploads|admin)\b/i)) {
     return next();
   }
   
   const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log(`📍 [SPA] Handling route: ${req.path}`);
+  console.log(`📍 [SPA] Routing to index.html: ${req.method} ${req.path}`);
   
   res.sendFile(indexPath, (err) => {
     if (err && err.code !== 'ECONNABORT') {
-      console.error(`❌ [SPA] Error serving index.html for ${req.path}:`, err.message);
+      console.error(`❌ [SPA] Error serving index.html:`, err.message);
       return res.status(500).send('Server error');
     }
   });
