@@ -16,8 +16,8 @@ export const getTransporter = async () => {
   if (process.env.SENDGRID_API_KEY) {
     const transportOptions = {
       host: 'smtp.sendgrid.net',
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
       auth: {
         user: 'apikey', // SendGrid utilise toujours 'apikey' comme username
         pass: process.env.SENDGRID_API_KEY,
