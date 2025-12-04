@@ -7,6 +7,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 let __dirname = path.dirname(__filename);
@@ -33,6 +34,14 @@ try {
   // Change to project root
   process.chdir(__dirname);
   console.log(`Working directory: ${process.cwd()}\n`);
+
+  // Install root dependencies if needed (for server-unified.js)
+  const rootNodeModules = path.join(__dirname, 'node_modules');
+  if (!fs.existsSync(rootNodeModules)) {
+    console.log('📦 Installing root dependencies...');
+    execSync('npm install', { stdio: 'inherit', cwd: __dirname });
+    console.log('✅ Root dependencies installed\n');
+  }
 
   // Verify server-unified.js exists
   const serverPath = path.join(__dirname, 'server-unified.js');
