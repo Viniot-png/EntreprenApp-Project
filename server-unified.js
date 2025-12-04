@@ -244,31 +244,44 @@ if (distExists) {
   console.log(`   Files in dist: ${files.join(', ')}${files.length > 10 ? '...' : ''}`);
 }
 
-// Serve static files (CSS, JS, images, etc.)
+// Serve static files (CSS, JS, images, etc.) with proper cache headers
 app.use(express.static(frontendDistPath, {
-  maxAge: '1y',
-  etag: false
+  maxAge: '1d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Cache assets (JS, CSS) for a long time
+    if (path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg|ico)$/)) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+    // Don't cache HTML files
+    else if (path.endsWith('.html')) {
+      res.set('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+  }
 }));
 
-// SPA fallback: ALL non-API routes go to index.html
-app.get(/.*/, (req, res) => {
-  console.log(`📍 [SPA] Handling route: ${req.path}`);
-  console.log(`   Method: ${req.method}`);
-  console.log(`   User-Agent: ${req.get('user-agent')}`);
-  console.log(`   Cookies: ${JSON.stringify(req.cookies)}`);
-  console.log(`   Auth header: ${req.get('authorization') ? 'Present' : 'Missing'}`);
+// SPA fallback: Route non-API, non-asset requests to index.html
+app.get('/', (req, res) => {
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  console.log(`📍 [SPA] Serving index.html for: ${req.path}`);
+  res.sendFile(indexPath);
+});
+
+// Handle all other non-API routes (SPA routing)
+app.get(/^(?!\/api\/).+$/, (req, res, next) => {
+  // Don't handle if it looks like a file request (has extension)
+  if (req.path.includes('.')) {
+    return next();
+  }
   
   const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log(`   Serving from: ${indexPath}`);
+  console.log(`📍 [SPA] Handling route: ${req.path}`);
   
   res.sendFile(indexPath, (err) => {
-    if (err) {
+    if (err && err.code !== 'ECONNABORT') {
       console.error(`❌ [SPA] Error serving index.html for ${req.path}:`, err.message);
-      console.error(`   Error code: ${err.code}`);
-      console.error(`   File path checked: ${indexPath}`);
-      res.status(500).send('Server error');
-    } else {
-      console.log(`   ✅ Successfully served index.html for ${req.path}`);
+      return res.status(500).send('Server error');
     }
   });
 });
