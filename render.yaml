@@ -3,8 +3,8 @@ services:
     name: entreprenapp-backend
     env: node
     plan: standard
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: cd EntreprenApp-Backend && npm install
+    startCommand: cd EntreprenApp-Backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,7 +14,8 @@ services:
     env: node
     plan: standard
     buildCommand: cd entreprenapp-frontend && npm install && npm run build
-    startCommand: cd entreprenapp-frontend && node server.js
+    startCommand: cd entreprenapp-frontend && npm run start
+    publishPath: entreprenapp-frontend/dist
     envVars:
       - key: NODE_ENV
         value: production
@@ -22,7 +23,4 @@ services:
         value: https://entreprenapp-backend-byvn.onrender.com
       - key: VITE_SOCKET_URL
         value: https://entreprenapp-backend-byvn.onrender.com
-    routes:
-      - path: /*
-        destination: /
 
