@@ -97,6 +97,55 @@ const io = new Server(server, {
 global.onlineUsers = new Map();
 global.io = io;
 
+// ============ SOCKET.IO LOGGING & AUTHENTICATION ============
+io.on('connection', (socket) => {
+  console.log(`✅ [Socket] New client connected: ${socket.id}`);
+  console.log(`   User ID: ${socket.handshake.query.userId || 'Anonymous'}`);
+  console.log(`   Headers: ${JSON.stringify(socket.handshake.headers)}`);
+  
+  const userId = socket.handshake.query.userId;
+  if (userId) {
+    global.onlineUsers.set(userId, socket.id);
+    console.log(`   ✅ User ${userId} added to onlineUsers. Total online: ${global.onlineUsers.size}`);
+  }
+
+  // Listen for events
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ [Socket] Client disconnected: ${socket.id}`);
+    console.log(`   Reason: ${reason}`);
+    console.log(`   User ID: ${userId || 'Anonymous'}`);
+    
+    if (userId) {
+      global.onlineUsers.delete(userId);
+      console.log(`   ✅ User ${userId} removed from onlineUsers. Total online: ${global.onlineUsers.size}`);
+    }
+  });
+
+  socket.on('error', (error) => {
+    console.error(`🔴 [Socket] Error on ${socket.id}:`, error);
+  });
+});
+
+// ============ HTTP REQUEST LOGGING ============
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const status = res.statusCode;
+    const statusEmoji = status >= 200 && status < 300 ? '✅' : status >= 300 && status < 400 ? '🔵' : status >= 400 && status < 500 ? '⚠️' : '🔴';
+    
+    console.log(`${statusEmoji} [HTTP] ${req.method} ${req.path} → ${status} (${duration}ms)`);
+    
+    if (status >= 400) {
+      console.log(`   Headers: ${JSON.stringify(req.headers)}`);
+      console.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}`);
+    }
+  });
+  
+  next();
+});
+
 app.set('trust proxy', 1);
 app.use(helmet());
 
@@ -174,7 +223,26 @@ app.get('/api-docs', (req, res) => {
 
 const frontendDistPath = path.join(__dirname, 'entreprenapp-frontend', 'dist');
 
-console.log(`📁 Frontend dist path: ${frontendDistPath}`);
+console.log(`\n📁 Frontend Configuration:`);
+console.log(`   Dist path: ${frontendDistPath}`);
+
+// Verify frontend files exist
+import fs from 'fs';
+const indexHtmlPath = path.join(frontendDistPath, 'index.html');
+if (fs.existsSync(indexHtmlPath)) {
+  console.log(`   ✅ index.html found`);
+} else {
+  console.error(`   ❌ index.html NOT found at ${indexHtmlPath}`);
+  console.error(`   Frontend build might be missing. Run: npm run build in entreprenapp-frontend/`);
+}
+
+const distExists = fs.existsSync(frontendDistPath);
+console.log(`   Dist directory: ${distExists ? '✅ exists' : '❌ missing'}`);
+
+if (distExists) {
+  const files = fs.readdirSync(frontendDistPath).slice(0, 10);
+  console.log(`   Files in dist: ${files.join(', ')}${files.length > 10 ? '...' : ''}`);
+}
 
 // Serve static files (CSS, JS, images, etc.)
 app.use(express.static(frontendDistPath, {
@@ -184,11 +252,23 @@ app.use(express.static(frontendDistPath, {
 
 // SPA fallback: ALL non-API routes go to index.html
 app.get('*', (req, res) => {
-  console.log(`📍 Routing ${req.path} to index.html`);
-  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+  console.log(`📍 [SPA] Handling route: ${req.path}`);
+  console.log(`   Method: ${req.method}`);
+  console.log(`   User-Agent: ${req.get('user-agent')}`);
+  console.log(`   Cookies: ${JSON.stringify(req.cookies)}`);
+  console.log(`   Auth header: ${req.get('authorization') ? 'Present' : 'Missing'}`);
+  
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  console.log(`   Serving from: ${indexPath}`);
+  
+  res.sendFile(indexPath, (err) => {
     if (err) {
-      console.error(`❌ Error serving index.html for ${req.path}:`, err.message);
+      console.error(`❌ [SPA] Error serving index.html for ${req.path}:`, err.message);
+      console.error(`   Error code: ${err.code}`);
+      console.error(`   File path checked: ${indexPath}`);
       res.status(500).send('Server error');
+    } else {
+      console.log(`   ✅ Successfully served index.html for ${req.path}`);
     }
   });
 });
@@ -206,11 +286,35 @@ server.listen(PORT, '0.0.0.0', () => {
 ╠══════════════════════════════════════════════════════════╣
 ║  Port: ${PORT}                                              ║
 ║  Environment: ${process.env.NODE_ENV}                                   ║
-║  Frontend: ✅ Served from dist/                          ║
-║  Backend: ✅ API on /api                                 ║
-║  Socket.io: ✅ Enabled                                    ║
+║  Hostname: 0.0.0.0                                       ║
+║                                                          ║
+║  ✅ Frontend: Served from dist/                         ║
+║  ✅ Backend: API routes on /api                         ║
+║  ✅ Socket.io: Enabled with logging                     ║
+║  ✅ CORS: Configured for ${corsOrigins.length} origins                ║
+║                                                          ║
+║  📍 Routes:                                             ║
+║     GET  /*        → index.html (SPA routing)          ║
+║     POST /api/*    → Backend API                       ║
+║     WS   /socket   → Socket.io                         ║
+║                                                          ║
+║  🔍 Logging enabled for:                               ║
+║     • HTTP requests with status codes                  ║
+║     • Socket.io connections/disconnections             ║
+║     • SPA routing attempts                             ║
+║     • Errors and warnings                              ║
 ╚══════════════════════════════════════════════════════════╝
   `);
+  console.log(`Access your app at: http://localhost:${PORT}\n`);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('🔴 [Unhandled Rejection]:', err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('🔴 [Uncaught Exception]:', err);
+  process.exit(1);
 });
 
 export default app;
