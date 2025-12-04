@@ -1,2 +1,3 @@
-web: bash build-production.sh && node server-unified.js
+web: bash render-start.sh
+
 
