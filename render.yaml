@@ -3,8 +3,8 @@ services:
     name: entreprenapp-backend
     env: node
     plan: standard
-    buildCommand: node build.js
-    startCommand: node start.js
+    buildCommand: cd /opt/render/project/src && node build.js
+    startCommand: cd /opt/render/project/src && node start.js
     envVars:
       - key: NODE_ENV
         value: production

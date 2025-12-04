@@ -8,8 +8,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node ../start.js",
-    "build": "echo 'Build handled by root build.js'",
+    "start": "cd .. && node start.js",
+    "build": "cd .. && node build.js",
     "start:unified": "node ../server-unified.js",
     "build:all": "npm install && cd ../entreprenapp-frontend && npm install && npm run build",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
