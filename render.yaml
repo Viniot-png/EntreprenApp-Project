@@ -3,8 +3,8 @@ services:
     name: entreprenapp-backend
     env: node
     plan: standard
-    buildCommand: bash build-production.sh
-    startCommand: node server-unified.js
+    buildCommand: node build.js
+    startCommand: node start.js
     envVars:
       - key: NODE_ENV
         value: production

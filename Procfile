@@ -1,3 +1,4 @@
-web: bash render-start.sh
+web: node start.js
+
 
 
