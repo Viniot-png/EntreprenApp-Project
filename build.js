@@ -42,7 +42,7 @@ try {
   
   process.chdir(backendDir);
   console.log(`   Changed to: ${process.cwd()}`);
-  execSync('npm install --production', { stdio: 'inherit' });
+  execSync('npm install', { stdio: 'inherit' });
   console.log('✅ Backend dependencies installed\n');
 
   // Build frontend
@@ -56,7 +56,7 @@ try {
   
   process.chdir(frontendDir);
   console.log(`   Changed to: ${process.cwd()}`);
-  execSync('npm install --production', { stdio: 'inherit' });
+  execSync('npm install', { stdio: 'inherit' });
   console.log('✅ Frontend dependencies installed\n');
 
   console.log('🔨 Step 3: Building frontend...');
