@@ -247,16 +247,16 @@ if (distExists) {
 // Serve static files (CSS, JS, images, etc.) with proper cache headers
 app.use(express.static(frontendDistPath, {
   maxAge: '24h',
-  etag: true,
-  lastModified: true,
+  etag: false,
+  lastModified: false,
   setHeaders: (res, path) => {
-    // Cache assets (JS, CSS, fonts, images) for a long time
+    // Cache assets (JS, CSS, fonts, images) for a long time - use hash for cache busting
     if (path.match(/\.(js|css|woff2|woff|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
     }
     // Don't cache HTML files - always revalidate
     else if (path.endsWith('.html')) {
-      res.set('Cache-Control', 'no-cache, must-revalidate, max-age=0');
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
     }
   }
@@ -269,14 +269,14 @@ app.all(/.*/, (req, res, next) => {
     return next();
   }
   
-  // Skip if it's a file with an extension
+  // Skip if it's a file with an extension (let 404 be handled by error handler)
   if (/\.\w+$/.test(req.path)) {
     return next();
   }
   
   // Skip if it looks like a directory request (common false asset paths)
-  if (req.path.match(/^\/(public|static|assets|images|fonts|uploads|admin)\b/i)) {
-    return next();
+  if (req.path.match(/^\/(public|static|assets|images|fonts|uploads|admin|api-docs|health)\b/i)) {
+    return res.status(404).json({ error: 'Not Found' });
   }
   
   const indexPath = path.join(frontendDistPath, 'index.html');
