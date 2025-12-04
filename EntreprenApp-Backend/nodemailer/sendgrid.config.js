@@ -30,10 +30,10 @@ export const sendEmailViaSendGrid = async (to, subject, html) => {
 
     const msg = {
       to,
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@entreprenapp.com',
+      from: process.env.SENDGRID_FROM_EMAIL || 'brugeonmadiba@gmail.com',
       subject,
       html,
-      replyTo: process.env.SENDGRID_FROM_EMAIL,
+      replyTo: process.env.SENDGRID_FROM_EMAIL || 'brugeonmadiba@gmail.com',
     };
 
     const response = await sgMail.send(msg);
