@@ -37,8 +37,10 @@ const app = express();
 
 const server = http.createServer(app);  
 
-// Augmenter les timeouts pour les uploads Cloudinary
-server.timeout = 60000; // 60 secondes pour les uploads
+// Augmenter les timeouts pour les uploads Cloudinary et améliorer keepAlive
+server.timeout = 120000; // 120 secondes pour les uploads
+server.keepAliveTimeout = 65000; // Keepalive timeout
+server.headersTimeout = 66000; // Headers timeout
 
 // Configuration CORS - MUST be first middleware
 const corsOrigins = [
@@ -92,7 +94,7 @@ if (process.env.NODE_ENV === 'development') {
 // but allow higher limits for authenticated API endpoints (friends, messages, etc.).
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 1000 : 500, // Production: 1000 req/15min per IP, Dev: 500
+  max: process.env.NODE_ENV === 'production' ? 2000 : 500, // Production: 2000 req/15min per IP (doubled)
   message: 'Too many authentication attempts, please try again later.',
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
@@ -107,7 +109,7 @@ const authLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 5000 : 5000, // Production: 5000 req/15min per IP, Dev: 5000
+  max: process.env.NODE_ENV === 'production' ? 10000 : 5000, // Production: 10000 req/15min per IP (doubled), Dev: 5000
   skip: (req) => process.env.NODE_ENV === 'development', // Skip rate limiting in development
   standardHeaders: true,
   legacyHeaders: false,

@@ -17,10 +17,13 @@ export const DbConnection = async () => {
   while (retryCount < maxRetries) {
     try {
       await mongoose.connect(process.env.MONGO_URL, {
-        maxPoolSize: process.env.NODE_ENV === 'production' ? 50 : 20,
-        minPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5,
-        socketTimeoutMS: 45000,
-        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: process.env.NODE_ENV === 'production' ? 100 : 20,
+        minPoolSize: process.env.NODE_ENV === 'production' ? 20 : 5,
+        socketTimeoutMS: 60000,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 15000,
+        retryWrites: true,
+        w: 'majority',
       });
       console.log('✅ MongoDB connecté avec succès');
       return;

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: entreprenapp-backend
+    env: node
+    plan: standard
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+
+  - type: static
+    name: entreprenapp-web
+    buildCommand: npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://entreprenapp-backend-byvn.onrender.com
+      - key: VITE_SOCKET_URL
+        value: https://entreprenapp-backend-byvn.onrender.com
+    routes:
+      - path: /*
+        destination: /index.html
