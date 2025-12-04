@@ -3,8 +3,8 @@ import {
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   VERIFICATION_EMAIL_TEMPLATE,
 } from "./emailTemplates.js";
+import { sendEmailViaSendGrid, initializeSendGrid } from "./sendgrid.config.js";
 import getTransporter from "./nodemailer.config.js";
-import nodemailer from 'nodemailer';
 
 /**
  * Récupère l'adresse email "from" configurée
@@ -18,6 +18,14 @@ export const sendVerificationEmail = async (email, verificationToken) => {
   try {
     if (!email) throw new Error("Aucune adresse email fournie");
 
+    // Try SendGrid API first (works on Render)
+    if (process.env.SENDGRID_API_KEY) {
+      const htmlContent = VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", verificationToken);
+      await sendEmailViaSendGrid(email, "Vérification de votre email - Entreprenapp", htmlContent);
+      return { success: true };
+    }
+    
+    // Fallback to SMTP
     const transporter = await getTransporter();
     const fromAddress = getFromAddress();
     
@@ -30,15 +38,6 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 
     const response = await transporter.sendMail(mailOptions);
     console.log(`✅ Email de vérification envoyé à ${email} (messageId=${response.messageId})`);
-    
-    // Log preview URL si en développement avec Ethereal
-    try {
-      const preview = nodemailer.getTestMessageUrl(response);
-      if (preview) console.log(`   URL de prévisualisation: ${preview}`);
-    } catch (e) {
-      // Ignore - c'est normal si pas Ethereal
-    }
-    
     return response;
   } catch (error) {
     console.error(`❌ Erreur lors de l'envoi de l'email de vérification à ${email}:`, error.message);
@@ -48,32 +47,30 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 
 export const sendWelcomeEmail = async (email, name) => {
   try {
+    const htmlContent = `
+      <h1>Bienvenue, ${name} !</h1>
+      <p>Merci de rejoindre Entreprenapp, la plateforme qui accompagne les entrepreneurs dans leur croissance.</p>
+      <p>Commencez dès maintenant à explorer nos outils et ressources conçus pour booster votre entreprise.</p>
+      <p>Nous sommes ravis de vous compter parmi nous !</p>
+      <p>Cordialement,<br><strong>L'équipe Entreprenapp</strong></p>
+    `;
+
+    // Try SendGrid API first
+    if (process.env.SENDGRID_API_KEY) {
+      await sendEmailViaSendGrid(email, "Bienvenue sur Entreprenapp !", htmlContent);
+      return { success: true };
+    }
+    
+    // Fallback to SMTP
     const transporter = await getTransporter();
     const fromAddress = getFromAddress();
-    
-    const mailOptions = {
+    const response = await transporter.sendMail({
       from: fromAddress,
       to: email,
       subject: "Bienvenue sur Entreprenapp !",
-      html: `
-        <h1>Bienvenue, ${name} !</h1>
-        <p>Merci de rejoindre Entreprenapp, la plateforme qui accompagne les entrepreneurs dans leur croissance.</p>
-        <p>Commencez dès maintenant à explorer nos outils et ressources conçus pour booster votre entreprise.</p>
-        <p>Nous sommes ravis de vous compter parmi nous !</p>
-        <p>Cordialement,<br><strong>L'équipe Entreprenapp</strong></p>
-      `,
-    };
-
-    const response = await transporter.sendMail(mailOptions);
+      html: htmlContent,
+    });
     console.log(`✅ Email de bienvenue envoyé à ${email}`);
-    
-    try {
-      const preview = nodemailer.getTestMessageUrl(response);
-      if (preview) console.log(`   URL de prévisualisation: ${preview}`);
-    } catch (e) {
-      // Ignore
-    }
-    
     return response;
   } catch (error) {
     console.error(`❌ Erreur lors de l'envoi de l'email de bienvenue à ${email}:`, error.message);
@@ -83,26 +80,24 @@ export const sendWelcomeEmail = async (email, name) => {
 
 export const sendPasswordResetEmail = async (email, resetURL) => {
   try {
+    const htmlContent = PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL);
+
+    // Try SendGrid API first
+    if (process.env.SENDGRID_API_KEY) {
+      await sendEmailViaSendGrid(email, "Réinitialisation de votre mot de passe - Entreprenapp", htmlContent);
+      return { success: true };
+    }
+    
+    // Fallback to SMTP
     const transporter = await getTransporter();
     const fromAddress = getFromAddress();
-    
-    const mailOptions = {
+    const response = await transporter.sendMail({
       from: fromAddress,
       to: email,
       subject: "Réinitialisation de votre mot de passe - Entreprenapp",
-      html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
-    };
-
-    const response = await transporter.sendMail(mailOptions);
+      html: htmlContent,
+    });
     console.log(`✅ Email de réinitialisation envoyé à ${email}`);
-    
-    try {
-      const preview = nodemailer.getTestMessageUrl(response);
-      if (preview) console.log(`   URL de prévisualisation: ${preview}`);
-    } catch (e) {
-      // Ignore
-    }
-    
     return response;
   } catch (error) {
     console.error(`❌ Erreur lors de l'envoi de l'email de réinitialisation à ${email}:`, error.message);
@@ -112,26 +107,22 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
 
 export const sendResetSuccessEmail = async (email) => {
   try {
+    // Try SendGrid API first
+    if (process.env.SENDGRID_API_KEY) {
+      await sendEmailViaSendGrid(email, "Réinitialisation réussie - Entreprenapp", PASSWORD_RESET_SUCCESS_TEMPLATE);
+      return { success: true };
+    }
+    
+    // Fallback to SMTP
     const transporter = await getTransporter();
     const fromAddress = getFromAddress();
-    
-    const mailOptions = {
+    const response = await transporter.sendMail({
       from: fromAddress,
       to: email,
       subject: "Réinitialisation réussie - Entreprenapp",
       html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-    };
-
-    const response = await transporter.sendMail(mailOptions);
+    });
     console.log(`✅ Email de confirmation envoyé à ${email}`);
-    
-    try {
-      const preview = nodemailer.getTestMessageUrl(response);
-      if (preview) console.log(`   URL de prévisualisation: ${preview}`);
-    } catch (e) {
-      // Ignore
-    }
-    
     return response;
   } catch (error) {
     console.error(`❌ Erreur lors de l'envoi de l'email de confirmation à ${email}:`, error.message);
