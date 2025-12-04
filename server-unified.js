@@ -251,7 +251,7 @@ app.use(express.static(frontendDistPath, {
 }));
 
 // SPA fallback: ALL non-API routes go to index.html
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   console.log(`📍 [SPA] Handling route: ${req.path}`);
   console.log(`   Method: ${req.method}`);
   console.log(`   User-Agent: ${req.get('user-agent')}`);
