@@ -263,7 +263,7 @@ app.use(express.static(frontendDistPath, {
 }));
 
 // SPA fallback: Route non-API, non-asset requests to index.html
-app.all('*', (req, res, next) => {
+app.all(/.*/, (req, res, next) => {
   // Skip if it's an API route
   if (req.path.startsWith('/api/')) {
     return next();
