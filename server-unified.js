@@ -246,18 +246,23 @@ if (distExists) {
 
 // Serve static files (CSS, JS, images, etc.) with proper cache headers
 app.use(express.static(frontendDistPath, {
-  maxAge: '24h',
+  fallthrough: true,
+  redirect: false,
+  index: false,
   etag: false,
   lastModified: false,
-  setHeaders: (res, path) => {
+  setHeaders: (res, filePath) => {
     // Cache assets (JS, CSS, fonts, images) for a long time - use hash for cache busting
-    if (path.match(/\.(js|css|woff2|woff|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
+    if (filePath.match(/\.(js|css|woff2|woff|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
     }
-    // Don't cache HTML files - always revalidate
-    else if (path.endsWith('.html')) {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    // Always serve HTML with cache headers that prevent caching
+    else if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'public, max-age=0, must-revalidate');
       res.set('Pragma', 'no-cache');
+    } else {
+      // Default: no cache
+      res.set('Cache-Control', 'no-cache');
     }
   }
 }));
